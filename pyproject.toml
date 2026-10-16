@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "finverify"
-version = "0.3.0"
+version = "0.4.0"
 description = "财报数字溯源与会计勾稽校验 —— 让 LLM 给出的每个财务数字都能点开验证"
 readme = "README.md"
 requires-python = ">=3.10"

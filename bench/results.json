@@ -1,0 +1,863 @@
+{
+  "meta": {
+    "started_at": "2026-10-16T14:39:27.770258+00:00",
+    "budget_limit_cny": 0.5,
+    "repeats": 1,
+    "targets": [
+      "total_assets",
+      "total_liabilities",
+      "total_equity",
+      "revenue",
+      "operating_cost",
+      "total_profit",
+      "income_tax",
+      "net_profit",
+      "operating_cash_flow",
+      "investing_cash_flow",
+      "financing_cash_flow",
+      "net_cash_increase"
+    ],
+    "finverify_version": "0.3.0",
+    "spent_cny": 0.0261588,
+    "calls": 18
+  },
+  "runs": [
+    {
+      "model": "deepseek-chat",
+      "vendor": "DeepSeek",
+      "sample": "clean",
+      "sample_note": "三表勾稽全部成立",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-chat",
+        "prompt_tokens": 415,
+        "completion_tokens": 175,
+        "cost_cny": 0.00223
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.00,\n  \"total_liabilities\": 4535000000.00,\n  \"total_equity\": 4915000000.00,\n  \"revenue\": 4820000000.00,\n  \"operating_cost\": 3016000000.00,\n  \"total_profit\": 612000000.00,\n  \"income_tax\": 91800000.00,\n  \"net_profit\": 520200000.00,\n  \"operating_cash_flow\": 705000000.00,\n  \"investing_cash_flow\": -880000000.00,\n  \"financing_cash_flow\": 240000000.00,\n  \"net_cash_increase\": 65000000.00\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-chat",
+          "prompt_tokens": 383,
+          "completion_tokens": 34,
+          "cost_cny": 0.001038
+        },
+        "raw_reply": "{\"debt_ratio\": 47.9894, \"net_margin\": 10.7925, \"cash_quality\": 1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "deepseek-chat",
+      "vendor": "DeepSeek",
+      "sample": "inject_equity",
+      "sample_note": "所有者权益被多记 5,000 万 —— 破坏资产恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-chat",
+        "prompt_tokens": 415,
+        "completion_tokens": 175,
+        "cost_cny": 0.00223
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.00,\n  \"total_liabilities\": 4535000000.00,\n  \"total_equity\": 4965000000.00,\n  \"revenue\": 4820000000.00,\n  \"operating_cost\": 3016000000.00,\n  \"total_profit\": 612000000.00,\n  \"income_tax\": 91800000.00,\n  \"net_profit\": 520200000.00,\n  \"operating_cash_flow\": 705000000.00,\n  \"investing_cash_flow\": -880000000.00,\n  \"financing_cash_flow\": 240000000.00,\n  \"net_cash_increase\": 65000000.00\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4965000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "FAIL",
+          "desc": "资产 = 负债 + 所有者权益 —— 不成立 (左 9,450,000,000.00 / 右 9,500,000,000.00 / 差异 -50,000,000.00，超出容差 9,450.00)",
+          "delta": -50000000.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-chat",
+          "prompt_tokens": 383,
+          "completion_tokens": 34,
+          "cost_cny": 0.001038
+        },
+        "raw_reply": "{\"debt_ratio\": 47.9894, \"net_margin\": 10.7925, \"cash_quality\": 1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "deepseek-chat",
+      "vendor": "DeepSeek",
+      "sample": "inject_tax",
+      "sample_note": "所得税被少记 1,200 万 —— 破坏净利润恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-chat",
+        "prompt_tokens": 415,
+        "completion_tokens": 175,
+        "cost_cny": 0.00223
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.00,\n  \"total_liabilities\": 4535000000.00,\n  \"total_equity\": 4915000000.00,\n  \"revenue\": 4820000000.00,\n  \"operating_cost\": 3016000000.00,\n  \"total_profit\": 612000000.00,\n  \"income_tax\": 79800000.00,\n  \"net_profit\": 520200000.00,\n  \"operating_cash_flow\": 705000000.00,\n  \"investing_cash_flow\": -880000000.00,\n  \"financing_cash_flow\": 240000000.00,\n  \"net_cash_increase\": 65000000.00\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 79800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "FAIL",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 不成立 (左 520,200,000.00 / 右 532,200,000.00 / 差异 -12,000,000.00，超出容差 520.20)",
+          "delta": -12000000.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-chat",
+          "prompt_tokens": 383,
+          "completion_tokens": 34,
+          "cost_cny": 0.001038
+        },
+        "raw_reply": "{\"debt_ratio\": 47.9894, \"net_margin\": 10.7925, \"cash_quality\": 1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "deepseek-reasoner",
+      "vendor": "DeepSeek 推理模型",
+      "sample": "clean",
+      "sample_note": "三表勾稽全部成立",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-reasoner",
+        "prompt_tokens": 441,
+        "completion_tokens": 818,
+        "cost_cny": 0.002077
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.00,\n  \"total_liabilities\": 4535000000.00,\n  \"total_equity\": 4915000000.00,\n  \"revenue\": 4820000000.00,\n  \"operating_cost\": 3016000000.00,\n  \"total_profit\": 612000000.00,\n  \"income_tax\": 91800000.00,\n  \"net_profit\": 520200000.00,\n  \"operating_cash_flow\": 705000000.00,\n  \"investing_cash_flow\": -880000000.00,\n  \"financing_cash_flow\": 240000000.00,\n  \"net_cash_increase\": 65000000.00\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-reasoner",
+          "prompt_tokens": 409,
+          "completion_tokens": 977,
+          "cost_cny": 0.002363
+        },
+        "raw_reply": "{\"debt_ratio\":47.9894,\"net_margin\":10.7925,\"cash_quality\":1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "deepseek-reasoner",
+      "vendor": "DeepSeek 推理模型",
+      "sample": "inject_equity",
+      "sample_note": "所有者权益被多记 5,000 万 —— 破坏资产恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-reasoner",
+        "prompt_tokens": 441,
+        "completion_tokens": 515,
+        "cost_cny": 0.001471
+      },
+      "raw_reply": "{\"total_assets\":9450000000.00,\"total_liabilities\":4535000000.00,\"total_equity\":4965000000.00,\"revenue\":4820000000.00,\"operating_cost\":3016000000.00,\"total_profit\":612000000.00,\"income_tax\":91800000.00,\"net_profit\":520200000.00,\"operating_cash_flow\":705000000.00,\"investing_cash_flow\":-880000000.00,\"financing_cash_flow\":240000000.00,\"net_cash_increase\":65000000.00}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4965000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "FAIL",
+          "desc": "资产 = 负债 + 所有者权益 —— 不成立 (左 9,450,000,000.00 / 右 9,500,000,000.00 / 差异 -50,000,000.00，超出容差 9,450.00)",
+          "delta": -50000000.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-reasoner",
+          "prompt_tokens": 409,
+          "completion_tokens": 904,
+          "cost_cny": 0.002217
+        },
+        "raw_reply": "{\"debt_ratio\":47.9894,\"net_margin\":10.7925,\"cash_quality\":1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "deepseek-reasoner",
+      "vendor": "DeepSeek 推理模型",
+      "sample": "inject_tax",
+      "sample_note": "所得税被少记 1,200 万 —— 破坏净利润恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "deepseek-reasoner",
+        "prompt_tokens": 441,
+        "completion_tokens": 677,
+        "cost_cny": 0.001795
+      },
+      "raw_reply": "{\"total_assets\":9450000000.00,\"total_liabilities\":4535000000.00,\"total_equity\":4915000000.00,\"revenue\":4820000000.00,\"operating_cost\":3016000000.00,\"total_profit\":612000000.00,\"income_tax\":79800000.00,\"net_profit\":520200000.00,\"operating_cash_flow\":705000000.00,\"investing_cash_flow\":-880000000.00,\"financing_cash_flow\":240000000.00,\"net_cash_increase\":65000000.00}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 79800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "FAIL",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 不成立 (左 520,200,000.00 / 右 532,200,000.00 / 差异 -12,000,000.00，超出容差 520.20)",
+          "delta": -12000000.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "deepseek-reasoner",
+          "prompt_tokens": 409,
+          "completion_tokens": 918,
+          "cost_cny": 0.002245
+        },
+        "raw_reply": "{\"debt_ratio\":47.9894,\"net_margin\":10.7925,\"cash_quality\":1.3552}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "qwen-plus",
+      "vendor": "阿里通义千问",
+      "sample": "clean",
+      "sample_note": "三表勾稽全部成立",
+      "repeat": 0,
+      "usage": {
+        "model": "qwen-plus",
+        "prompt_tokens": 524,
+        "completion_tokens": 243,
+        "cost_cny": 0.0009052
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.00,\n  \"total_liabilities\": 4535000000.00,\n  \"total_equity\": 4915000000.00,\n  \"revenue\": 4820000000.00,\n  \"operating_cost\": 3016000000.00,\n  \"total_profit\": 612000000.00,\n  \"income_tax\": 91800000.00,\n  \"net_profit\": 520200000.00,\n  \"operating_cash_flow\": 705000000.00,\n  \"investing_cash_flow\": -880000000.00,\n  \"financing_cash_flow\": 240000000.00,\n  \"net_cash_increase\": 65000000.00\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "qwen-plus",
+          "prompt_tokens": 523,
+          "completion_tokens": 44,
+          "cost_cny": 0.0005064
+        },
+        "raw_reply": "{\n  \"debt_ratio\": 47.9894,\n  \"net_margin\": 10.7925,\n  \"cash_quality\": 1.3553\n}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3553
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3553,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "qwen-plus",
+      "vendor": "阿里通义千问",
+      "sample": "inject_equity",
+      "sample_note": "所有者权益被多记 5,000 万 —— 破坏资产恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "qwen-plus",
+        "prompt_tokens": 524,
+        "completion_tokens": 231,
+        "cost_cny": 0.0008812
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.0,\n  \"total_liabilities\": 4535000000.0,\n  \"total_equity\": 4965000000.0,\n  \"revenue\": 4820000000.0,\n  \"operating_cost\": 3016000000.0,\n  \"total_profit\": 612000000.0,\n  \"income_tax\": 91800000.0,\n  \"net_profit\": 520200000.0,\n  \"operating_cash_flow\": 705000000.0,\n  \"investing_cash_flow\": -880000000.0,\n  \"financing_cash_flow\": 240000000.0,\n  \"net_cash_increase\": 65000000.0\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4965000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 91800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "FAIL",
+          "desc": "资产 = 负债 + 所有者权益 —— 不成立 (左 9,450,000,000.00 / 右 9,500,000,000.00 / 差异 -50,000,000.00，超出容差 9,450.00)",
+          "delta": -50000000.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "PASS",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 成立 (左 520,200,000.00 / 右 520,200,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "qwen-plus",
+          "prompt_tokens": 523,
+          "completion_tokens": 44,
+          "cost_cny": 0.0005064
+        },
+        "raw_reply": "{\n  \"debt_ratio\": 47.9894,\n  \"net_margin\": 10.7925,\n  \"cash_quality\": 1.3553\n}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3553
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3553,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model": "qwen-plus",
+      "vendor": "阿里通义千问",
+      "sample": "inject_tax",
+      "sample_note": "所得税被少记 1,200 万 —— 破坏净利润恒等式",
+      "repeat": 0,
+      "usage": {
+        "model": "qwen-plus",
+        "prompt_tokens": 524,
+        "completion_tokens": 231,
+        "cost_cny": 0.0008812
+      },
+      "raw_reply": "{\n  \"total_assets\": 9450000000.0,\n  \"total_liabilities\": 4535000000.0,\n  \"total_equity\": 4915000000.0,\n  \"revenue\": 4820000000.0,\n  \"operating_cost\": 3016000000.0,\n  \"total_profit\": 612000000.0,\n  \"income_tax\": 79800000.0,\n  \"net_profit\": 520200000.0,\n  \"operating_cash_flow\": 705000000.0,\n  \"investing_cash_flow\": -880000000.0,\n  \"financing_cash_flow\": 240000000.0,\n  \"net_cash_increase\": 65000000.0\n}",
+      "parsed": {
+        "total_assets": 9450000000.0,
+        "total_liabilities": 4535000000.0,
+        "total_equity": 4915000000.0,
+        "revenue": 4820000000.0,
+        "operating_cost": 3016000000.0,
+        "total_profit": 612000000.0,
+        "income_tax": 79800000.0,
+        "net_profit": 520200000.0,
+        "operating_cash_flow": 705000000.0,
+        "investing_cash_flow": -880000000.0,
+        "financing_cash_flow": 240000000.0,
+        "net_cash_increase": 65000000.0
+      },
+      "comparison": {
+        "exact": 12,
+        "drifted": 0,
+        "hallucinated": 0,
+        "missing": 0,
+        "detail": {}
+      },
+      "identities": {
+        "BS_BALANCE": {
+          "status": "PASS",
+          "desc": "资产 = 负债 + 所有者权益 —— 成立 (左 9,450,000,000.00 / 右 9,450,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        },
+        "IS_NET_PROFIT": {
+          "status": "FAIL",
+          "desc": "净利润 = 利润总额 − 所得税费用 —— 不成立 (左 520,200,000.00 / 右 532,200,000.00 / 差异 -12,000,000.00，超出容差 520.20)",
+          "delta": -12000000.0
+        },
+        "CF_BRIDGE": {
+          "status": "PASS",
+          "desc": "现金净增加额 = 经营 + 投资 + 筹资活动现金流量净额 —— 成立 (左 65,000,000.00 / 右 65,000,000.00 / 差异 0.00)",
+          "delta": 0.0
+        }
+      },
+      "derived_task": {
+        "usage": {
+          "model": "qwen-plus",
+          "prompt_tokens": 523,
+          "completion_tokens": 44,
+          "cost_cny": 0.0005064
+        },
+        "raw_reply": "{\n  \"debt_ratio\": 47.9894,\n  \"net_margin\": 10.7925,\n  \"cash_quality\": 1.3552\n}",
+        "parsed": {
+          "debt_ratio": 47.9894,
+          "net_margin": 10.7925,
+          "cash_quality": 1.3552
+        },
+        "deterministic": {
+          "debt_ratio": 47.98941798941799,
+          "net_margin": 10.79253112033195,
+          "cash_quality": 1.3552479815455594
+        },
+        "score": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "detail": {
+            "debt_ratio": {
+              "got": 47.9894,
+              "expected": 47.98941798941799,
+              "verdict": "正确"
+            },
+            "net_margin": {
+              "got": 10.7925,
+              "expected": 10.79253112033195,
+              "verdict": "正确"
+            },
+            "cash_quality": {
+              "got": 1.3552,
+              "expected": 1.3552479815455594,
+              "verdict": "正确"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
