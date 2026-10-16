@@ -1,0 +1,72 @@
+=== 缺失频率（19 份年报，11 个标准科目）===
+  total_profit               缺 14/19 份 (74%)
+  financing_cash_flow        缺 13/19 份 (68%)
+  investing_cash_flow        缺 13/19 份 (68%)
+  net_profit                 缺 11/19 份 (58%)
+  operating_cash_flow        缺 11/19 份 (58%)
+  total_equity               缺 10/19 份 (53%)
+  revenue                    缺 5/19 份 (26%)
+  net_cash_increase          缺 5/19 份 (26%)
+  income_tax                 缺 1/19 份 (5%)
+  total_assets               缺 1/19 份 (5%)
+  total_liabilities          缺 1/19 份 (5%)
+
+=== 恒等式结果分布 ===
+  FAIL 条数分布: {0: 6, 1: 8, 2: 5}
+  REVIEW 条数分布: {1: 6, 2: 8, 3: 5}
+  审计结论分布: {'FAIL': 13, 'REVIEW_REQUIRED': 6}
+
+=== 断点定位 ===
+  单元格里有标签、但指标没抽出来 = 断在「标签->指标映射」
+  单元格里没标签 = 断在「表格识别」
+
+  873576_天力复合.pdf                  页   4 指标 0/11 单元格标签 0/11 差  0  口径unknown     FAIL=0
+      缺: financing_cash_flow, income_tax, investing_cash_flow, net_cash_increase, net_profit, operating_cash_flow, revenue, total_assets, total_equity, total_liabilities, total_profit
+  688669_聚石化学.pdf                  页 317 指标 3/11 单元格标签 7/11 差  4  口径consolidated FAIL=0
+      缺: financing_cash_flow, investing_cash_flow, net_cash_increase, net_profit, operating_cash_flow, revenue, total_equity, total_profit
+  688301_奕瑞科技.pdf                  页 274 指标 4/11 单元格标签 7/11 差  3  口径consolidated FAIL=0
+      缺: financing_cash_flow, investing_cash_flow, net_cash_increase, net_profit, operating_cash_flow, total_equity, total_profit
+  688173_希荻微.pdf                   页 239 指标 5/11 单元格标签 8/11 差  3  口径consolidated FAIL=0
+      缺: financing_cash_flow, investing_cash_flow, net_cash_increase, net_profit, total_equity, total_profit
+  001228_永泰运.pdf                   页 222 指标 6/11 单元格标签11/11 差  5  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, net_profit, operating_cash_flow, total_profit
+  002413_雷科防务.pdf                  页 239 指标 6/11 单元格标签10/11 差  4  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, net_profit, operating_cash_flow, total_profit
+  002825_纳尔股份.pdf                  页 211 指标 6/11 单元格标签11/11 差  5  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, net_profit, operating_cash_flow, total_profit
+  300241_瑞丰光电.pdf                  页 248 指标 6/11 单元格标签 8/11 差  2  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, net_profit, operating_cash_flow, total_profit
+  300786_国林科技.pdf                  页 204 指标 6/11 单元格标签 8/11 差  2  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, operating_cash_flow, revenue, total_profit
+  603117_ST万林.pdf                  页 224 指标 6/11 单元格标签 8/11 差  2  口径consolidated FAIL=0
+      缺: financing_cash_flow, investing_cash_flow, operating_cash_flow, total_equity, total_profit
+  688152_麒麟信安.pdf                  页 271 指标 6/11 单元格标签 7/11 差  1  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, net_cash_increase, operating_cash_flow, total_equity
+  688685_迈信林.pdf                   页 243 指标 7/11 单元格标签 8/11 差  1  口径consolidated FAIL=1
+      缺: financing_cash_flow, investing_cash_flow, operating_cash_flow, total_equity
+  301072_中捷精工.pdf                  页 175 指标 8/11 单元格标签11/11 差  3  口径consolidated FAIL=2
+      缺: net_profit, revenue, total_profit
+  688610_埃科光电.pdf                  页 249 指标 8/11 单元格标签 0/11 差 -8  口径unknown     FAIL=0
+      缺: financing_cash_flow, investing_cash_flow, total_equity
+  000421_南京公用.pdf                  页 217 指标 9/11 单元格标签11/11 差  2  口径consolidated FAIL=2
+      缺: net_profit, total_profit
+  000930_中粮科技.pdf                  页 243 指标 9/11 单元格标签11/11 差  2  口径consolidated FAIL=2
+      缺: revenue, total_profit
+  002598_山东章鼓.pdf                  页 181 指标 9/11 单元格标签11/11 差  2  口径consolidated FAIL=2
+      缺: net_profit, total_profit
+  600448_华纺股份.pdf                  页 198 指标10/11 单元格标签11/11 差  1  口径consolidated FAIL=2
+      缺: total_equity
+  836263_中航泰达.pdf                  页 147 指标10/11 单元格标签11/11 差  1  口径consolidated FAIL=1
+      缺: total_equity
+
+=== 口径识别失败 ===
+  688610_埃科光电.pdf                      249页  标记0  summary=249页
+  873576_天力复合.pdf                      4页  标记0  summary=4页
+
+=== 页数异常（可能不是完整年报）===
+  873576_天力复合.pdf                      4 页
+
+=== 结论 ===
+  平均指标命中 6.53/11，单元格标签 8.37/11，差距 1.84
+  表格识别不是主要瓶颈（8.37/11 已很高）；
+  真正的缺口在「标签 -> MetricKind 映射」，即中文科目名的写法变体。

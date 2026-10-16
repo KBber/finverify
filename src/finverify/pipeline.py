@@ -15,7 +15,7 @@ from finverify.extraction import ExtractionTrace, extract_metrics
 from finverify.ingestion import Document, load_document
 from finverify.provenance import ProvenanceIndex
 from finverify.schemas import FinancialMetric, ScopeKind, VerificationStatus
-from finverify.scope import detect_scopes, dominant_scope
+from finverify.scope import detect_scopes_cached, dominant_scope
 from finverify.validation import DEFAULT_RULES, AccountingRule, ValidationEngine
 
 _STATUS_MARK = {
@@ -184,7 +184,7 @@ def audit(
     effective = scope
     smap = None
     if effective is None:
-        smap = detect_scopes(pdf_path)
+        smap = detect_scopes_cached(pdf_path)
         effective = dominant_scope(smap)
         if effective is None:
             effective = None  # 没找到三表标题 -> 不做口径过滤（旧行为）

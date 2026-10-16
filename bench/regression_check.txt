@@ -1,0 +1,73 @@
+===== 688610_埃科光电.pdf =====
+  [重建关] scope=unknown status=REVIEW_REQUIRED
+      指标 9: ['income_tax', 'net_cash_increase', 'net_profit', 'operating_cash_flow', 'operating_cost', 'revenue', 'total_assets', 'total_liabilities', 'total_profit']
+      REVIEW_REQUIRED  BS_BALANCE     Δ=-
+      PASS             IS_NET_PROFIT  Δ=-0.00
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets               1,591,247,176.07 p132
+      total_liabilities             92,322,388.34 p132
+      net_profit                    15,751,385.43 p219
+      total_profit                  14,840,794.38 p217
+      income_tax                      -910,591.05 p217
+      net_cash_increase            117,152,379.76 p220
+      operating_cash_flow          -46,082,881.93 p220
+  [重建开] scope=unknown status=FAIL
+      指标 10: ['income_tax', 'investing_cash_flow', 'net_cash_increase', 'net_profit', 'operating_cash_flow', 'operating_cost', 'revenue', 'total_assets', 'total_liabilities', 'total_profit']
+      REVIEW_REQUIRED  BS_BALANCE     Δ=-
+      FAIL             IS_NET_PROFIT  Δ=-1,293,040.25
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets               1,591,247,176.07 p132
+      total_liabilities             92,322,388.34 p132
+      net_profit                    15,751,385.43 p133
+      total_profit                  14,840,794.38 p133
+      income_tax                    -2,203,631.30 p220
+      net_cash_increase            117,152,379.76 p220
+      operating_cash_flow          -46,082,881.93 p220
+      investing_cash_flow         -931,377,480.35 p135
+
+===== 603117_ST万林.pdf =====
+  [重建关] scope=consolidated status=REVIEW_REQUIRED
+      指标 7: ['income_tax', 'net_cash_increase', 'net_profit', 'operating_cost', 'revenue', 'total_assets', 'total_liabilities']
+      REVIEW_REQUIRED  BS_BALANCE     Δ=-
+      REVIEW_REQUIRED  IS_NET_PROFIT  Δ=-
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets                 968,653,788.47 p84
+      total_liabilities            416,962,907.41 p83
+      net_profit                  -255,748,522.08 p87
+      income_tax                    -2,878,668.74 p88
+      net_cash_increase             -9,044,842.11 p91
+  [重建开] scope=consolidated status=FAIL
+      指标 8: ['income_tax', 'net_cash_increase', 'net_profit', 'operating_cost', 'revenue', 'total_assets', 'total_liabilities', 'total_profit']
+      REVIEW_REQUIRED  BS_BALANCE     Δ=-
+      FAIL             IS_NET_PROFIT  Δ=256,645,131.31
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets                 968,653,788.47 p84
+      total_liabilities            416,962,907.41 p83
+      net_profit                    10,899,177.63 p88
+      total_profit                -248,624,622.42 p87
+      income_tax                    -2,878,668.74 p88
+      net_cash_increase             -9,044,842.11 p91
+
+===== 002825_纳尔股份.pdf =====
+  [重建关] scope=consolidated status=FAIL
+      指标 7: ['income_tax', 'net_cash_increase', 'operating_cost', 'revenue', 'total_assets', 'total_equity', 'total_liabilities']
+      FAIL             BS_BALANCE     Δ=-1,402,125,117.79
+      REVIEW_REQUIRED  IS_NET_PROFIT  Δ=-
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets               1,206,225,706.73 p76
+      total_liabilities            217,673,817.23 p77
+      total_equity               2,390,677,007.29 p77
+      income_tax                     5,142,366.53 p82
+      net_cash_increase             74,932,898.33 p84
+  [重建开] scope=consolidated status=FAIL
+      指标 9: ['income_tax', 'net_cash_increase', 'net_profit', 'operating_cost', 'revenue', 'total_assets', 'total_equity', 'total_liabilities', 'total_profit']
+      FAIL             BS_BALANCE     Δ=-1,402,125,117.79
+      FAIL             IS_NET_PROFIT  Δ=-124,930,181.89
+      REVIEW_REQUIRED  CF_BRIDGE      Δ=-
+      total_assets               1,206,225,706.73 p76
+      total_liabilities            217,673,817.23 p77
+      total_equity               2,390,677,007.29 p77
+      net_profit                             0.00 p82
+      total_profit                 130,072,548.42 p82
+      income_tax                     5,142,366.53 p82
+      net_cash_increase             74,932,898.33 p84

@@ -1,0 +1,14 @@
+688610_埃科光电.pdf
+摘要区披露总资产: 1,591,247,200.00 元
+
+  p 132 total_assets           consolidated     1,591,247,176.07
+  p 132 total_liabilities      consolidated        92,322,388.34
+  p 133 income_tax             consolidated          -910,591.05
+  p 133 net_profit             consolidated        15,751,385.43
+  p 133 operating_cost         consolidated       142,526,122.33
+  p 133 revenue                consolidated       235,575,368.09
+  p 133 total_profit           consolidated        14,840,794.38
+  p 135 investing_cash_flow    consolidated      -931,377,480.35
+  p 135 net_cash_increase      consolidated       117,152,379.76
+
+与摘要区一致的指标 0 条

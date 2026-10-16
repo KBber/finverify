@@ -7,7 +7,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-28%2F28%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-66%2F66%20passing-brightgreen)]()
 
 ---
 
@@ -228,8 +228,9 @@ tolerance_abs = 0.01     # 1 分
 ```
 finverify/
 ├── src/finverify/
-│   ├── schemas.py       # EvidenceSpan / VerifiedNumber / FinancialMetric
-│   ├── ingestion.py     # PDF → 带页码与坐标的表格行
+│   ├── schemas.py       # EvidenceSpan / VerifiedNumber / FinancialMetric / ScopeKind
+│   ├── ingestion.py     # PDF → 带页码与坐标的表格行（含无框线表的行重建）
+│   ├── scope.py         # 报表口径识别（合并 / 母公司 / 摘要 / 附注）
 │   ├── extraction.py    # 表格行 → FinancialMetric（规则驱动）
 │   ├── validation.py    # 会计恒等式引擎（带符号线性组合）
 │   ├── provenance.py    # 溯源索引与渲染
@@ -237,10 +238,13 @@ finverify/
 │   ├── pipeline.py      # 编排 + 报告渲染
 │   ├── web.py           # 单文件 HTML 报告（PDF 内嵌，零依赖）
 │   └── cli.py           # 命令行入口
-├── bench/                  # 多模型对照评测（可复现，预算硬约束）
-│   ├── llm_client.py       # LLM 调用 + 预算守卫
-│   ├── run_bench.py        # 主运行器
-│   ├── make_report.py      # 从原始结果自动生成报告
+├── bench/
+│   ├── llm_client.py       # LLM 调用 + 预算守卫（超 85% 即抛错终止）
+│   ├── run_bench.py        # 多模型对照主运行器
+│   ├── make_report.py      # 从原始结果自动生成报告（数字不经手工填写）
+│   ├── fetch_annual_reports.py  # 从巨潮批量获取真实年报 PDF
+│   ├── batch_analyze.py    # 19 份真实年报的批量审计
+│   ├── ab_merge_final.py   # 行重建 A/B 对照（决定 merge_fragments 默认值）
 │   ├── results.json        # 原始输出全文（含模型回复）
 │   └── RESULTS.md          # 评测结果
 ├── samples/
@@ -251,7 +255,9 @@ finverify/
 │   └── demo_report_tax.html         # 负样本 B 的可交互报告
 ├── tests/
 │   ├── test_validation.py   # 8 项：校验层行为
-│   └── test_pipeline.py     # 20 项：端到端 + 回归 + 文本规范化
+│   ├── test_pipeline.py     # 23 项：端到端 + 回归 + 文本规范化
+│   ├── test_scope.py        # 21 项：口径识别
+│   └── test_merge_rows.py   # 14 项：无框线表行重建
 └── docs/
     └── EVALUATION.md        # benchmark 设计
 ```
@@ -304,6 +310,33 @@ finverify/
 
 > 这两个 bug 都不是靠读代码发现的，是把同一份数据换三种字体跑出来的。
 > 回归用例已固化（`test_cjk_compatibility_ideograph_is_normalised` 等 4 项）。
+
+### 在 19 份真实年报上抓到的四个缺陷
+
+合成样本永远测不出下面这些 —— 它们全部来自对 19 份巨潮公开年报的批量审计
+（沪深主板 / 创业板 / 科创板 / 北交所，70.3 MB，141–249 页）。
+
+| 缺陷 | 后果 |
+|---|---|
+| 三表标题带**中文序号前缀**（`（一） 合并资产负债表`） | 8 个真标题一条都匹配不上，口径标记反而落在**审计报告的报表目录**上，母公司报表被当成合并口径 |
+| 三表标题**无前缀**（裸的 `资产负债表`） | 零口径标记 → **根本不做口径过滤** → 附注里的数被当报表科目抽出（实测所得税费用取到递延所得税调节表的 -2,203,631.30） |
+| **附注编号列**被当成金额 | `七、61`（附注七第 61 项）里的 `61` 被读成营业收入，真正的本期数 235,575,368.09 被忽略 |
+| 破折号 `-` 表示「零/无」 | `四、净利润  -  -` 被当成「只有标签没有数值」，去吞掉下一行，净利润读成 0.00 |
+| **一页两个口径被并成一张表** | 实测 603117 p88 的表格 bbox 横跨整页（74→759），上半是合并利润表尾部、下半是母公司报表。表格级判定只能二选一地错，母公司所得税 -2,878,668.74 被当成合并口径，恒等式报出差 10,002,568.40 的假 FAIL |
+
+第三类最隐蔽，因为它**产生的是一个看起来合理的错值**：
+
+```
+[0] 一、营业收入   [1] 七、61   [3] 235,575,368.09   [4] 262,666,026.24
+[0] 减:所得税费用 [1] 七、76   [3] -910,591.05      [4] 8,817,750.06
+```
+
+`parse_number` 是「从文本里抠数字」的通用工具（search 语义），
+拿它判断「某个单元格是不是数值」就会把附注编号当成金额。
+修复是分层的：**工具函数保持宽松，单元格层面加一道「整体必须是数字」的闸门**。
+
+第四类则体现了会计惯例与程序直觉的冲突 —— 在中文财报里，
+破折号不是负号，是「这一项没有数」。
 
 ---
 

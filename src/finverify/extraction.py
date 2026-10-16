@@ -30,7 +30,7 @@ from finverify.schemas import (
     StatementKind,
     VerifiedNumber,
 )
-from finverify.scope import ScopeMap, detect_scopes
+from finverify.scope import ScopeMap, detect_scopes_cached
 
 # --------------------------------------------------------------------------
 # 数值解析
@@ -67,6 +67,10 @@ def parse_number(text: str) -> tuple[float, str] | None:
     """从一段文本里解析出数值与单位。
 
     支持：千分位、负号、括号负数 ``(1,234)``、中文单位后缀、百分号。
+
+    **这是通用工具，允许从夹杂文字的文本里抠数字**（如
+    ``"营业收入 3,600.00 万元"``）。但正因为宽松，**不能直接拿它判断
+    表格里的某个单元格是不是数值** —— 见 :func:`_is_value_cell`。
 
     Returns
     -------
@@ -106,6 +110,34 @@ def parse_number(text: str) -> tuple[float, str] | None:
     return val, unit
 
 
+# 数值单元格必须是「整体就是一个数」，夹带任何其他文字一律拒绝。
+#
+# 为什么不能用 parse_number 直接判断：它是通用工具，靠 search 抠数字，
+# 于是「附注编号」列会被当成金额。实测 688610 埃科光电 p133 的利润表：
+#
+#     [0] 一、营业收入   [1] 七、61   [3] 235,575,368.09   [4] 262,666,026.24
+#     [0] 减:所得税费用 [1] 七、76   [3] -910,591.05      [4] 8,817,750.06
+#
+# 「七、61」是**附注七第 61 项**的引用编号，被 search 抠出 61，
+# 于是营业收入读成 61.00、所得税费用读成 76.00 —— 而真正的本期数
+# 就在第 3 列躺着。这个数一旦错，「净利润 = 利润总额 − 所得税费用」
+# 恒等式会报出一个看似合理的假 FAIL，最难被发现。
+#
+# 允许的形态：正负号、千分位、小数、括号负数、单位后缀、百分号。
+_VALUE_CELL_RE = re.compile(
+    rf"^[（(]?[{_MINUS_CLASS}]?[\d,]+(?:\.\d+)?[）)]?"
+    r"\s*(?:%|万元|亿元|千元|百万元|元)?$"
+)
+
+
+def _is_value_cell(text: str) -> bool:
+    """这个表格单元格**本身**是不是一个数值（而不是「含有数字」）。"""
+    if not text:
+        return False
+    t = normalize_text(text).strip().replace(" ", "").replace(" ", "")
+    return bool(_VALUE_CELL_RE.match(t))
+
+
 # --------------------------------------------------------------------------
 # 科目名 → 指标
 # --------------------------------------------------------------------------
@@ -139,6 +171,10 @@ _LABEL_PATTERNS: tuple[tuple[str, MetricKind, StatementKind], ...] = (
 _COMPILED = tuple(
     (re.compile(pat), kind, stmt) for pat, kind, stmt in _LABEL_PATTERNS
 )
+
+# 净利润的两个分项。search 匹配必须先排掉它们，否则「终止经营净利润」
+# 会被当成 NET_PROFIT。实测 002825 纳尔股份因此把 net_profit 读成 0.00。
+_NET_PROFIT_SUBITEM_RE = re.compile(r"(?:持续经营|终止经营)净利润")
 
 
 @dataclass(slots=True)
@@ -176,6 +212,19 @@ def classify_label(label: str) -> tuple[MetricKind, StatementKind] | None:
     # 去掉序号前缀：一、二、1、2、（一）
     cleaned = re.sub(r"^[（(]?[一二三四五六七八九十\d]+[）)、.．]?", "", label.strip())
     cleaned = cleaned.replace(" ", "")
+
+    # 「持续经营净利润」「终止经营净利润」是净利润的两个**分项**，
+    # 不是净利润本身。匹配用的是 search，不加这道闸门，
+    # `净利润` 会命中「终止经营净利润」—— 实测 002825 纳尔股份
+    # 因此把 net_profit 读成了 0.00（那是终止经营那块的数）。
+    #
+    # 这里宁可判为「不认识」也不硬套：归零的净利润会让
+    # 「净利润 = 利润总额 − 所得税」恒等式假性 FAIL，
+    # 而漏抽只会是 REVIEW_REQUIRED —— 两者都不是好结果，
+    # 但错值会误导人认为年报有问题，漏抽只会说「证据不足」。
+    if _NET_PROFIT_SUBITEM_RE.search(cleaned):
+        return None
+
     for rx, kind, stmt in _COMPILED:
         if rx.search(cleaned):
             return kind, stmt
@@ -201,8 +250,12 @@ def extract_from_row(
             continue
         kind, stmt = hit
 
-        # 在该行右侧找第一个能解析成数字的单元格
+        # 在该行右侧找第一个**本身就是数值**的单元格。
+        # 不能用 parse_number 判：它是 search 语义，会把附注编号
+        # 「七、61」里的 61 当成金额（实测 688610 p133）。
         for val_idx in range(label_idx + 1, len(row.values)):
+            if not _is_value_cell(row.values[val_idx]):
+                continue
             parsed = parse_number(row.values[val_idx])
             if parsed is None:
                 continue
@@ -250,16 +303,24 @@ def extract_metrics(
     smap: ScopeMap | None = None
 
     if scope is not None:
-        smap = detect_scopes(doc.path)
+        smap = detect_scopes_cached(doc.path)
         if not smap.marks:
             return [], trace  # 没有三表标题 -> 该口径不存在
 
     for table in doc.tables:
-        # 按 y 坐标判定归属，而不是只看页码 —— 同一页可能同时
-        # 残留上一张表的尾部与下一张表的表头
-        if smap is not None and smap.scope_for(table.page, table.bbox) is not scope:
-            continue
         for row in table.rows:
+            # 口径判定必须做到**行级**，不能只按整张表。
+            # 表格识别经常把一页里的两段内容并成一张表：
+            # 实测 603117 ST万林 p88 的 bbox 是 74→759 横跨整页，
+            # 首行「(二)稀释每股收益」属合并利润表尾部，
+            # 「母公司利润表」标题在 y=159.2，其下才是母公司报表。
+            # 按整张表判定只能二选一地错，而错的那一半会直接污染勾稽 ——
+            # 实测母公司所得税费用 -2,878,668.74 被当成合并口径抽出，
+            # 净利润恒等式报出差 10,002,568.40 的假 FAIL。
+            if smap is not None and smap.scope_for_row(
+                table.page, row.row_bbox
+            ) is not scope:
+                continue
             if row.is_blank:
                 continue
             trace.rows_seen += 1

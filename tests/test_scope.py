@@ -52,6 +52,85 @@ def test_title_tolerates_whitespace_and_numbering():
         assert match_title(text) is not None, f"{text!r} 未识别为标题"
 
 
+def test_title_tolerates_chinese_numeral_prefix():
+    """中文序号前缀。实测 836263 / 873576 的 8 个真标题全是这种写法。
+
+    回归背景：``_clean`` 原来只剥阿拉伯数字，于是
+    ``（一） 合并资产负债表`` 一条都匹配不上。偏偏同一份文件里
+    审计报告正文有一份不带序号的报表名称清单，那些反而匹配上了 ——
+    口径标记全落在审计报告目录上，母公司报表被当成合并口径。
+    """
+    cases = [
+        ("（一） 合并资产负债表", ScopeKind.CONSOLIDATED),
+        ("（二） 母公司资产负债表", ScopeKind.PARENT),
+        ("（三） 合并利润表", ScopeKind.CONSOLIDATED),
+        ("（四） 母公司利润表", ScopeKind.PARENT),
+        ("（五） 合并现金流量表", ScopeKind.CONSOLIDATED),
+        ("（六） 母公司现金流量表", ScopeKind.PARENT),
+        ("（七） 合并股东权益变动表", ScopeKind.CONSOLIDATED),
+        ("（八） 母公司股东权益变动表", ScopeKind.PARENT),
+        ("一、合并资产负债表", ScopeKind.CONSOLIDATED),
+        ("十、母公司利润表", ScopeKind.PARENT),
+    ]
+    for text, expected in cases:
+        assert match_title(text) is expected, f"{text!r} 口径判定错误"
+
+
+def test_bare_titles_are_consolidated():
+    """无前缀裸标题按合并口径处理。实测 688610 埃科光电全是这种写法。
+
+    回归背景：零口径标记意味着 **audit 根本不做口径过滤**，
+    附注里的数会被当报表科目抽出来。实测 688610 p220
+    递延所得税调节表的 -2,203,631.30 被当成所得税费用，
+    现金流量表补充资料被当成现金流量净额 —— 全是脏数据。
+
+    「裸的就算合并」不是想当然，依据是实测数值比对：
+        摘要区 p12  总资产 159,124.72 万元 = 1,591,247,200.00 元
+        裸标题区 p132 资产总计             1,591,247,176.07 元
+    差 23.93 元，正是万元四舍五入的精度差。
+    """
+    for text in (
+        "资产负债表",
+        "利润表",
+        "现金流量表",
+        "所有者权益变动表",
+        "股东权益变动表",
+    ):
+        assert match_title(text) is ScopeKind.CONSOLIDATED, f"{text!r} 口径判定错误"
+
+
+def test_prefixed_titles_still_win_over_bare():
+    """带前缀的写法不能被裸标题规则抢走。"""
+    for text, expected in (
+        ("合并资产负债表", ScopeKind.CONSOLIDATED),
+        ("母公司资产负债表", ScopeKind.PARENT),
+        ("母公司利润表", ScopeKind.PARENT),
+        ("母公司现金流量表", ScopeKind.PARENT),
+    ):
+        assert match_title(text) is expected, f"{text!r} 口径判定错误"
+
+
+def test_bare_title_rule_does_not_capture_notes_lines():
+    """附注里带「资产负债表」的行不能被裸标题规则误判成标题。
+
+    实测 688610 p134「十三、资产负债表日后事项」—— 序号被剥掉后
+    剩下 8 个字，不 fullmatch 任何表名，所以安全。
+    """
+    for s in (
+        "十三、资产负债表日后事项",
+        "十四、资产负债表日后事项",
+        "（1）资产负债表日外币货币性项目的折算方法",
+    ):
+        assert match_title(s) is None, f"{s!r} 被误判为三表标题"
+
+
+def test_number_strip_does_not_eat_real_content():
+    """序号必须有右括号/顿号收尾，不能把正常内容的前缀吃掉。"""
+    # 这些开头是数字但不是序号，剥完就不是标题了 —— 但也不能被剥成别的标题
+    for s in ("2023年年度报告", "12月31日的合并资产负债表"):
+        assert match_title(s) is None, f"{s!r} 不应被识别为标题"
+
+
 def test_notes_sentence_is_not_a_title():
     """附注正文里满是「合并资产负债表」字样，绝不能当成标题。
 
@@ -148,6 +227,49 @@ def test_table_without_bbox_falls_back_to_page_scope():
     smap.page_scope = {52: ScopeKind.CONSOLIDATED, 1: ScopeKind.SUMMARY}
     assert smap.scope_for(52, None) is ScopeKind.CONSOLIDATED
     assert smap.scope_of(1) is ScopeKind.SUMMARY
+
+
+def test_row_level_scope_splits_one_table_across_two_scopes():
+    """回归测试：一页里被并成一张表的两个口径，必须能按行区分。
+
+    实测 603117 ST万林 p88：表格 bbox 是 74→759 横跨整页，
+    首行「(二)稀释每股收益」属**合并利润表尾部**，
+    而「母公司利润表」标题在 y=159.2，其下才是母公司报表。
+    表格识别把两段并成了一张表，表格级判定只能二选一地错 ——
+    实测母公司所得税费用 -2,878,668.74 被当成合并口径抽出，
+    净利润恒等式报出差 10,002,568.40 的假 FAIL。
+    """
+    smap = _smap_with_marks(
+        [ScopeMark(page=88, y0=159.2, scope=ScopeKind.PARENT,
+                   title="母公司利润表")]
+    )
+    smap.page_scope = {88: ScopeKind.CONSOLIDATED}
+
+    whole_table = (74, 74, 506, 759)
+    assert smap.scope_for(88, whole_table) is ScopeKind.CONSOLIDATED
+
+    # 标题之上的行（合并利润表尾部）-> 合并
+    assert smap.scope_for_row(88, (74, 74, 506, 100)) is ScopeKind.CONSOLIDATED
+    # 标题之下的行（母公司）-> 母公司
+    assert smap.scope_for_row(88, (74, 200, 506, 300)) is ScopeKind.PARENT
+
+
+def test_row_level_scope_uses_row_top_inclusively():
+    """行顶与标题同高时算在标题之后 —— 标题行本身属于它宣告的那张表。"""
+    smap = _smap_with_marks(
+        [ScopeMark(page=88, y0=159.2, scope=ScopeKind.PARENT,
+                   title="母公司利润表")]
+    )
+    smap.page_scope = {88: ScopeKind.CONSOLIDATED}
+    assert smap.scope_for_row(88, (74, 159.2, 506, 170)) is ScopeKind.PARENT
+    assert smap.scope_for_row(88, (74, 159.1, 506, 170)) is ScopeKind.CONSOLIDATED
+
+
+def test_row_level_scope_falls_back_to_page_scope():
+    smap = _smap_with_marks([])
+    smap.page_scope = {7: ScopeKind.NOTES}
+    assert smap.scope_for_row(7, (10, 10, 100, 50)) is ScopeKind.NOTES
+    assert smap.scope_for_row(7, None) is ScopeKind.NOTES
 
 
 def test_page_before_any_title_is_summary():

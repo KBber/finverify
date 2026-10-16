@@ -29,6 +29,7 @@ import argparse
 import json
 import pathlib
 import random
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -50,13 +51,20 @@ HEADERS = {
 
 # 年报类别
 CATEGORY_NDBG = "category_ndbg_szsh"
-COLUMNS = ("szse", "sse")
+COLUMNS = ("szse", "sse", "third")  # third = 北交所，实测 873576 在这里
 
 # 标题里出现这些词，说明是修订/更正/补充版本，权威性更高
 REVISED_HINTS = ("更新", "更正", "修订", "补充", "重述")
 # 这些不是完整年报，评测集里应当排除
 EXCLUDE_HINTS = ("摘要", "英文", "取消", "问询", "审计报告", "内部控制",
                  "社会责任", "可持续", "ESG")
+# 这些是「通知」而不是年报正文。实测踩坑：873576 天力复合被选中的是
+# 《2023年年度报告（更正公告）》—— 标题里含「年度报告」能过 is_full_report，
+# 又因为含「更正」拿到修订分 1，高于真正的年报全文（分 0），
+# 于是去重时**主动挑走了公告本身**，下到一个 0.18 MB / 4 页的空壳。
+# 「更正公告 / 修订公告」必须排除，否则修订打分反而成了陷阱。
+NOTICE_HINTS = ("更正公告", "修订公告", "补充公告", "更正说明", "修订说明",
+                "问询函", "关注函", "监管函")
 
 
 def query(page: int, size: int, se_date: str, column: str) -> dict:
@@ -84,8 +92,15 @@ def query(page: int, size: int, se_date: str, column: str) -> dict:
 
 
 def is_full_report(title: str) -> bool:
+    """标题是否指向一份**完整的年度报告正文**。
+
+    注意排除通知类标题（见 ``NOTICE_HINTS``）：更正公告这类文件
+    标题里同样含「年度报告」，但它是几十页的说明，不是几百页的正文。
+    """
     t = title.replace("<em>", "").replace("</em>", "")
     if any(x in t for x in EXCLUDE_HINTS):
+        return False
+    if any(x in t for x in NOTICE_HINTS):
         return False
     return "年度报告" in t
 
@@ -94,6 +109,17 @@ def score_title(title: str) -> int:
     """修订版分数更高，用于同一公司多版本去重。"""
     t = title.replace("<em>", "").replace("</em>", "")
     return sum(1 for h in REVISED_HINTS if h in t)
+
+
+# Windows 文件名非法字符。实测踩到：ST 股公司名带 '*'（如 *ST某某），
+# 直接拼进文件名会抛 [Errno 22] Invalid argument。
+_ILLEGAL = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def safe_name(code: str, name: str) -> str:
+    """把公司名转成合法文件名。"""
+    cleaned = _ILLEGAL.sub("_", name).strip().strip(".")
+    return f"{code}_{cleaned or 'unnamed'}.pdf"
 
 
 def download(url: str, dest: pathlib.Path) -> int:
@@ -177,7 +203,7 @@ def main() -> int:
         name = a["secName"]
         title = a["announcementTitle"].replace("<em>", "").replace("</em>", "")
         url = STATIC_BASE + a["adjunctUrl"]
-        dest = out_dir / f"{code}_{name}.pdf"
+        dest = out_dir / safe_name(code, name)
         try:
             size = download(url, dest)
         except Exception as exc:  # noqa: BLE001
