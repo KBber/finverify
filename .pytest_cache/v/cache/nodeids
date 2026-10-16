@@ -1,4 +1,6 @@
 [
+  "tests/test_merge_rows.py::test_blank_line_inside_a_wrapped_label_still_merges",
+  "tests/test_merge_rows.py::test_blank_row_is_a_record_separator_not_a_fragment",
   "tests/test_merge_rows.py::test_blank_rows_are_dropped",
   "tests/test_merge_rows.py::test_complete_rows_never_merge",
   "tests/test_merge_rows.py::test_dash_counts_as_zero_number[-]",

@@ -215,7 +215,17 @@ def merge_wrapped_rows(rows: list[TableRow], height_gate: bool = False) -> list[
 
     for row in rows:
         if row.is_blank:
-            continue  # 全空行没有信息，只会污染合并
+            # 全空行是**记录分隔符**，必须 flush。
+            #
+            # 曾经这里只 continue，于是「永远凑不齐数值」的组会一路往后吸：
+            # 合成样本的现金流量表表头 `合并现金流量表(简表)` + `项目 本期金额`
+            # 被吸进第一行数据，变成
+            #     合并现金流量表(简表)项目 本期金额经营活动产生的现金流量净额 | 705,000,000.00
+            # Windows 字体下靠 classify_label 在拼接串里碰巧找到正确模式而侥幸通过，
+            # Linux(Noto CJK) 行结构一变就抽不到经营/投资两个净额，
+            # CI 上 CF_BRIDGE 直接报「缺失构成项」。表头不是碎片，不该被合并。
+            flush()
+            continue
 
         row_text, row_num = _row_shape(row)
 
