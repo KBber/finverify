@@ -13,7 +13,9 @@
 from __future__ import annotations
 
 import contextlib
+import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 
 import pymupdf
@@ -104,24 +106,53 @@ FONT_SIZE = 9.5
 # 中文会渲染成空白或乱码。必须加载系统 TTF/TTC。
 
 _FONT_CANDIDATES = (
+    # Windows
     ("C:/Windows/Fonts/msyh.ttc", "雅黑"),
     ("C:/Windows/Fonts/simsun.ttc", "宋体"),
     ("C:/Windows/Fonts/simhei.ttf", "黑体"),
+    # macOS
+    ("/System/Library/Fonts/PingFang.ttc", "苹方"),
+    ("/System/Library/Fonts/Hiragino Sans GB.ttc", "冬青黑体"),
+    # Linux（Debian/Ubuntu 常用；CI 默认无中文字体，需显式安装）
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "思源黑体"),
+    ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "思源黑体"),
+    ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", "文泉驿正黑"),
+    ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", "文泉驿微米黑"),
 )
 
 
 def _pick_fontfile() -> tuple[str, str]:
+    env = os.environ.get("FINVERIFY_FONT", "").strip()
+    if env:
+        if Path(env).exists():
+            return env, "自定义"
+        raise RuntimeError(f"FINVERIFY_FONT 指向的字体不存在: {env}")
+
     for path, label in _FONT_CANDIDATES:
         if Path(path).exists():
             return path, label
     raise RuntimeError(
-        "未找到可用的中文字体。合成样本需要 CJK 字形，"
-        "请安装 Microsoft YaHei / SimSun / SimHei 之一。"
+        "未找到可用的中文字体。合成样本需要 CJK 字形。\n"
+        "  Windows: 自带 雅黑/宋体/黑体\n"
+        "  macOS:   自带 苹方\n"
+        "  Linux:   apt-get install fonts-noto-cjk fonts-wqy-zenhei\n"
+        "  或显式指定: export FINVERIFY_FONT=/path/to/font.ttc"
     )
 
 
-_FONTFILE, _FONTNAME = _pick_fontfile()
-_FONT = pymupdf.Font(fontfile=_FONTFILE)
+@lru_cache(maxsize=1)
+def _font() -> tuple[pymupdf.Font, str]:
+    """惰性加载中文字体。
+
+    刻意不在模块导入期解析字体：否则在没有中文字体的机器上
+    （CI 容器、绝大多数 Linux）`import finverify` 直接炸掉，
+    连 validation.py 这种零依赖的纯校验模块都用不了。
+    """
+    path, _ = _pick_fontfile()
+    return pymupdf.Font(fontfile=path), "FVS"
+
+
+# PDF 内部的字体资源名，必须与插入时使用的别名一致
 _FONT_ALIAS = "FVS"
 
 
@@ -140,7 +171,7 @@ def _fmt(v: float) -> str:
 
 def _measure(text: str, size: float) -> float:
     """用字体对象测量文本宽度（比例字距，比例中文字体必须如此）。"""
-    return _FONT.text_length(text, fontsize=size)
+    return _font()[0].text_length(text, fontsize=size)
 
 
 def _render_table(page: pymupdf.Page, y: float, tbl: _Table) -> float:
@@ -151,7 +182,8 @@ def _render_table(page: pymupdf.Page, y: float, tbl: _Table) -> float:
     col_x = [MARGIN_X, MARGIN_X + 300]
     right_x = PAGE_W - MARGIN_X
 
-    page.insert_font(fontname=_FONT_ALIAS, fontfile=_FONTFILE)
+    fontfile, _ = _pick_fontfile()
+    page.insert_font(fontname=_FONT_ALIAS, fontfile=fontfile)
 
     page.insert_text((MARGIN_X, y), tbl.title,
                      fontname=_FONT_ALIAS, fontsize=11.5)
@@ -198,9 +230,12 @@ def build_sample_pdf(
 
     doc = pymupdf.open()
 
+    # 解析字体放在真正生成样本时才做，且整份文档只解析一次
+    fontfile, _ = _pick_fontfile()
+
     # ---------------- 封面 ----------------
     p0 = doc.new_page(width=PAGE_W, height=PAGE_H)
-    p0.insert_font(fontname=_FONT_ALIAS, fontfile=_FONTFILE)
+    p0.insert_font(fontname=_FONT_ALIAS, fontfile=fontfile)
     y = MARGIN_X * 2.2
     p0.insert_text((MARGIN_X, y), d.company, fontname=_FONT_ALIAS, fontsize=20)
     y += 40

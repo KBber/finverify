@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import enum
+import sys
 from dataclasses import dataclass, field
 
 
@@ -33,7 +34,24 @@ class EvidenceQuality(enum.IntEnum):
     """无出处 —— 默认拒绝使用"""
 
 
-class StatementKind(enum.StrEnum):
+if sys.version_info >= (3, 11):
+    StrEnum = enum.StrEnum
+else:  # pragma: no cover — Python 3.10 回退
+
+    class StrEnum(str, enum.Enum):
+        """3.10 上的等价实现。
+
+        3.11 才引入 enum.StrEnum，而本项目声明支持 3.10。
+        3.10 的 `class X(str, Enum)` 里 `str(x)` 会返回 "X.VALUE"，
+        因此必须显式覆写 __str__ 才能与 3.11+ 行为一致 ——
+        否则同一份报告在不同 Python 版本上会渲染出不同字符串。
+        """
+
+        def __str__(self) -> str:
+            return str(self.value)
+
+
+class StatementKind(StrEnum):
     """报表类型。"""
 
     BALANCE_SHEET = "balance_sheet"
@@ -49,7 +67,7 @@ class StatementKind(enum.StrEnum):
     """附注"""
 
 
-class MetricKind(enum.StrEnum):
+class MetricKind(StrEnum):
     """指标标识。参与勾稽校验的指标必须有明确枚举值。"""
 
     # 资产负债表
@@ -76,7 +94,7 @@ class MetricKind(enum.StrEnum):
     UNKNOWN = "unknown"
 
 
-class VerificationStatus(enum.StrEnum):
+class VerificationStatus(StrEnum):
     """校验结论。刻意使用三态而非二值 —— 承认证据不足是正常状态。"""
 
     PASS = "PASS"
