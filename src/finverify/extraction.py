@@ -26,9 +26,11 @@ from finverify.schemas import (
     EvidenceSpan,
     FinancialMetric,
     MetricKind,
+    ScopeKind,
     StatementKind,
     VerifiedNumber,
 )
+from finverify.scope import ScopeMap, detect_scopes
 
 # --------------------------------------------------------------------------
 # 数值解析
@@ -227,17 +229,36 @@ def extract_from_row(
 
 
 def extract_metrics(
-    doc: Document, period: str = "2023"
+    doc: Document,
+    period: str = "2023",
+    scope: ScopeKind | None = None,
 ) -> tuple[list[FinancialMetric], ExtractionTrace]:
     """从整份文档抽取指标。
 
     同一 ``(period, kind)`` 出现多次时，**保留最后一次出现** ——
     年报里常见"简表"在前、"完整表"在后，后者更权威。
+
+    Parameters
+    ----------
+    scope:
+        只抽取该口径下的指标。真实年报里合并报表与母公司报表的同名科目
+        数值不同，**必须先按口径过滤再勾稽**，否则结果必然不平。
+        为 ``None`` 时不过滤（合成样本只有单一口径，等价于全部纳入）。
     """
     trace = ExtractionTrace()
     found: dict[MetricKind, FinancialMetric] = {}
+    smap: ScopeMap | None = None
+
+    if scope is not None:
+        smap = detect_scopes(doc.path)
+        if not smap.marks:
+            return [], trace  # 没有三表标题 -> 该口径不存在
 
     for table in doc.tables:
+        # 按 y 坐标判定归属，而不是只看页码 —— 同一页可能同时
+        # 残留上一张表的尾部与下一张表的表头
+        if smap is not None and smap.scope_for(table.page, table.bbox) is not scope:
+            continue
         for row in table.rows:
             if row.is_blank:
                 continue
@@ -249,6 +270,8 @@ def extract_metrics(
                 if label:
                     trace.unmatched_labels.append(label)
                 continue
+            if scope is not None:
+                metric.scope = scope
             trace.rows_matched += 1
             found[metric.kind] = metric  # 后出现覆盖先出现
 

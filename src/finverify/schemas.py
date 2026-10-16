@@ -67,6 +67,41 @@ class StatementKind(StrEnum):
     """附注"""
 
 
+class ScopeKind(StrEnum):
+    """报表口径。
+
+    这是从真实年报里学到的：**同一个科目在不同口径下是不同的数**。
+
+    实测两份年报的资产总计：
+
+        艾艾精工   合并 528,372,737.29   母公司 429,004,543.99   差 1 亿
+        金花股份   合并 2,108,551,141.95 母公司 2,109,552,350.20
+
+    合并报表含子公司，母公司报表只含本公司 —— **两者恒等式各自成立，
+    但混在一起算必然不平**。所以勾稽校验必须在同口径内进行。
+    """
+
+    CONSOLIDATED = "consolidated"
+    """合并报表 —— 含子公司，是审计意义上真正的「这家公司的账」"""
+
+    PARENT = "parent"
+    """母公司报表 —— 只含本公司"""
+
+    SUMMARY = "summary"
+    """主要会计数据摘要表 —— 数值口径与正表一致，但无完整科目，不能参与勾稽"""
+
+    NOTES = "notes"
+    """财务报表附注。
+
+    实测某年报的附注长达 117 页，其中散布着大量「资产合计」「营业收入」
+    字样（附注里的分项小计）。若不单独标记，它们会被归进上一个口径，
+    产生最隐蔽的一类污染。
+    """
+
+    UNKNOWN = "unknown"
+    """未能归类。仅当文档里找不到任何三表标题时出现"""
+
+
 class MetricKind(StrEnum):
     """指标标识。参与勾稽校验的指标必须有明确枚举值。"""
 
@@ -180,6 +215,14 @@ class FinancialMetric:
 
     number: VerifiedNumber
     statement: StatementKind
+
+    scope: ScopeKind = ScopeKind.UNKNOWN
+    """报表口径（合并 / 母公司 / 摘要）。
+
+    默认 UNKNOWN 以保持向后兼容：旧代码按位置参数构造
+    :class:`FinancialMetric` 不受影响。但**真实年报必须填对**——
+    合并与母公司口径的同名科目数值不同，混在一起勾稽必然不平。
+    """
 
     extra: dict[str, str] = field(default_factory=dict)
     """附加披露信息，如币种、会计准则。"""

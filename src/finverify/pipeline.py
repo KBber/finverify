@@ -14,7 +14,8 @@ from pathlib import Path
 from finverify.extraction import ExtractionTrace, extract_metrics
 from finverify.ingestion import Document, load_document
 from finverify.provenance import ProvenanceIndex
-from finverify.schemas import FinancialMetric, VerificationStatus
+from finverify.schemas import FinancialMetric, ScopeKind, VerificationStatus
+from finverify.scope import detect_scopes, dominant_scope
 from finverify.validation import DEFAULT_RULES, AccountingRule, ValidationEngine
 
 _STATUS_MARK = {
@@ -36,6 +37,8 @@ class AuditReport:
     trace: ExtractionTrace
     doc_summary: str
     warnings: list[str] = field(default_factory=list)
+    scope: ScopeKind = ScopeKind.UNKNOWN
+    """本次审计采用的口径。UNKNOWN 表示文档里未检测到三表标题（合成样本）。"""
 
     # ------------------------------------------------------------------
     @property
@@ -162,13 +165,40 @@ def audit(
     period: str = "2023",
     rules: tuple[AccountingRule, ...] = DEFAULT_RULES,
     strategy: str = "text",
+    scope: ScopeKind | None = None,
 ) -> AuditReport:
-    """对一份财报 PDF 执行完整审计流水线。"""
+    """对一份财报 PDF 执行完整审计流水线。
+
+    Parameters
+    ----------
+    scope:
+        指定报表口径。真实年报里合并报表与母公司报表的同名科目数值不同
+        （实测某公司资产总计相差 1 亿），**混在一起勾稽必然不平**。
+        传 ``ScopeKind.CONSOLIDATED`` 可只审计合并口径。
+
+        默认为 ``None``：**自动选择口径** —— 若文档里检测到合并报表就用合并，
+        否则退回母公司。若两者都没有（合成样本）则不过滤，保持旧行为。
+    """
     doc: Document = load_document(pdf_path, strategy=strategy)
-    metrics, trace = extract_metrics(doc, period=period)
+
+    effective = scope
+    smap = None
+    if effective is None:
+        smap = detect_scopes(pdf_path)
+        effective = dominant_scope(smap)
+        if effective is None:
+            effective = None  # 没找到三表标题 -> 不做口径过滤（旧行为）
+
+    metrics, trace = extract_metrics(doc, period=period, scope=effective)
 
     engine = ValidationEngine(rules)
     results = engine.validate(metrics, period)
+
+    warnings = list(doc.warnings)
+    if effective is not None:
+        warnings.append(f"口径: {effective.value}")
+    if smap is not None:
+        warnings.append(f"口径分布: {smap.summary()}")
 
     return AuditReport(
         source=str(pdf_path),
@@ -178,5 +208,6 @@ def audit(
         rule_results=results,
         trace=trace,
         doc_summary=doc.summary(),
-        warnings=list(doc.warnings),
+        warnings=warnings,
+        scope=effective or ScopeKind.UNKNOWN,
     )
