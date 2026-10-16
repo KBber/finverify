@@ -9,12 +9,31 @@ PyMuPDF 的表格识别默认走 ``lines`` 策略，只认有完整框线的表�
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pymupdf
 
 BBox = tuple[float, float, float, float]
+
+
+def normalize_text(text: str) -> str:
+    """NFKC 规范化 PDF 抽取出的文本。
+
+    这一步不是洁癖，是必需的。实测踩到的坑：
+
+    - **CJK 兼容汉字**：部分字体（Noto Sans CJK 等）里"润"字的
+      字形反向映射到 U+F9DD（兼容码位）而非 U+6DA6（规范码位）。
+      于是 `三、利润总额` 实际是 `三、利润\uF9DD总额`，
+      正则 `利润总额` 匹配不上，整行指标静默丢失。
+    - **全角减号 / 全角括号**：－（U+FF0D）、（）（U+FF08/09），
+      NFKC 之后分别变成 `-` 与 `()`，负数与括号负数才认得出。
+
+    NFKC 把所有这些兼容写法折叠到规范形式，
+    下游的科目名正则与数值解析只需要处理一种写法。
+    """
+    return unicodedata.normalize("NFKC", text)
 
 
 @dataclass(slots=True)
@@ -105,7 +124,7 @@ def load_document(
                         TableRow(
                             page=pno + 1,
                             row_index=ridx,
-                            values=[(v or "").strip() for v in vals],
+                            values=[normalize_text(v or "").strip() for v in vals],
                             cells=cells,
                         )
                     )

@@ -7,7 +7,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-24%2F24%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-28%2F28%20passing-brightgreen)]()
 
 ---
 
@@ -205,7 +205,7 @@ finverify/
 │   └── demo_report_tax.html         # 负样本 B 的可交互报告
 ├── tests/
 │   ├── test_validation.py   # 8 项：校验层行为
-│   └── test_pipeline.py     # 16 项：端到端 + 回归
+│   └── test_pipeline.py     # 20 项：端到端 + 回归 + 文本规范化
 └── docs/
     └── EVALUATION.md        # benchmark 设计
 ```
@@ -226,6 +226,38 @@ finverify/
 | `"负债和所有者权益总计"` 误映射为权益 | 资产恒等式失去意义 |
 | `--format markdown --out` 落盘写成 text | 导出文件扩展名与内容不符 |
 | Windows GBK 控制台输出 ✅ 崩溃 | `UnicodeEncodeError`，任何 Windows 用户跑 demo 即崩 |
+| **CJK 兼容汉字未规范化** | 换字体即静默丢指标，见下 |
+| **只认 ASCII 负号 / ASCII 括号** | 负数被读成正数，见下 |
+
+### 两个值得单独说的坑
+
+**1. CJK 兼容码位 —— 换台机器就丢指标**
+
+部分字体（Noto Sans CJK 等）会把「利」字的字形反向映射到 **U+F9DD**
+（显示完全相同，码位不同）。于是 PDF 抽出来的是 `三、利润总额`
+在码位层面却是 `三、\uF9DD润总额`，正则 `利润总额` 匹配不上：
+
+```
+缺 total_profit / net_profit / 全部现金流指标
+→ 勾稽校验因"证据不足"判 REVIEW_REQUIRED
+→ 报告看起来"很合理"，没有任何报错
+```
+
+**换字体就静默丢数据，而且丢得毫无痕迹。** 修复是入口处做 NFKC 规范化
+（`ingestion.normalize_text`），把兼容写法折叠成规范形式，
+下游只需要处理一种写法。
+
+**2. 负号不止 ASCII 一种**
+
+实测 PDF 里抽到的负号可能是 `-`(U+002D)、`‑`(U+2011)、`−`(U+2212)、
+`－`(U+FF0D)、`–`、`—`；括号也可能是全角 `（）`。
+旧实现只认 ASCII，于是 **-8.8 亿被读成 +8.8 亿**，
+现金流量表恒等式反而"通过"了——错误被校验层掩盖。
+
+对财务工具来说，符号丢失比解析失败危险得多。
+
+> 这两个 bug 都不是靠读代码发现的，是把同一份数据换三种字体跑出来的。
+> 回归用例已固化（`test_cjk_compatibility_ideograph_is_normalised` 等 4 项）。
 
 ---
 
@@ -239,7 +271,7 @@ finverify/
 - [x] 中文科目名规则抽取（序号前缀、千分位、中文单位、括号负数）
 - [x] 合成样本生成器 + 可注入负样本
 - [x] CLI（text / markdown / json / html，退出码即结论）
-- [x] 24 项测试
+- [x] 28 项测试（含跨字体与文本规范化回归）
 - [x] Web UI（单文件 HTML，点击数字定位原文并高亮 bbox）
 - [ ] 中文年报 benchmark + 多模型数字幻觉率对比
 - [ ] 附注级深挖（表外关联）

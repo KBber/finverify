@@ -20,7 +20,7 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from finverify.ingestion import Document, TableRow
+from finverify.ingestion import Document, TableRow, normalize_text
 from finverify.schemas import (
     EvidenceQuality,
     EvidenceSpan,
@@ -34,11 +34,19 @@ from finverify.schemas import (
 # 数值解析
 # --------------------------------------------------------------------------
 
-_NUM_RE = re.compile(r"-?[\d,]+(?:\.\d+)?")
+# 负号不止 ASCII 连字符一种。真实 PDF / 不同字体里实测会拿到：
+#   U+002D -   U+2011 ‑(非断行)  U+2212 −(减号)
+#   U+2013 –   U+2014 —          U+FF0D －(全角，NFKC 后已是 -)
+# 全角连字符与全角括号由 NFKC 折叠，剩下这几个 NFKC 不处理，必须显式列出。
+# 漏掉任何一个的后果是：**负数被读成正数**，对财务工具是灾难性错误。
+_MINUS_CLASS = r"\u002d\u2010\u2011\u2012\u2013\u2014\u2212\uff0d"
+
+_NUM_RE = re.compile(rf"[{_MINUS_CLASS}]?[\d,]+(?:\.\d+)?")
 
 # 括号负数：会计惯例 (1,234.00) = -1234.00
-# 注意必须允许小数点，否则 "(1,234.00)" 匹配不上。
-_PAREN_NEG_RE = re.compile(r"\(\s*-?[\d,]+(?:\.\d+)?\s*\)")
+# 必须同时接受全角括号 —— 中文财报里全角用法非常普遍。
+# 也必须允许小数点，否则 "(1,234.00)" 匹配不上。
+_PAREN_NEG_RE = re.compile(rf"[（(]\s*[{_MINUS_CLASS}]?[\d,]+(?:\.\d+)?\s*[）)]")
 
 # 中文财报常见的单位后缀，乘数表
 _UNIT_SCALE = {
@@ -64,7 +72,9 @@ def parse_number(text: str) -> tuple[float, str] | None:
     """
     if not text:
         return None
-    t = text.strip().replace(" ", "").replace(" ", "")
+    # NFKC：折叠全角数字/减号/括号等兼容写法。
+    # 直接调用本函数的调用方未必经过 ingestion 层规范化，这里必须自保。
+    t = normalize_text(text).strip().replace(" ", "").replace(" ", "")
 
     if not _NUM_RE.search(t):
         return None
@@ -75,6 +85,8 @@ def parse_number(text: str) -> tuple[float, str] | None:
     if not m:
         return None
     raw = m.group(0).replace(",", "")
+    # 非 ASCII 的各种连字符 float() 解析不了，统一换成 ASCII 减号
+    raw = re.sub(f"[{_MINUS_CLASS}]", "-", raw)
     try:
         val = float(raw)  # float() 已处理前置负号
     except ValueError:
@@ -156,6 +168,9 @@ def classify_label(label: str) -> tuple[MetricKind, StatementKind] | None:
     """把科目名映射到 (指标, 报表类型)。"""
     if not label:
         return None
+    # NFKC：部分字体会把"润"这类字反向映射成兼容码位 U+F9DD，
+    # 不规范化则 `利润总额` 正则匹配不上，整行指标静默丢失。
+    label = normalize_text(label)
     # 去掉序号前缀：一、二、1、2、（一）
     cleaned = re.sub(r"^[（(]?[一二三四五六七八九十\d]+[）)、.．]?", "", label.strip())
     cleaned = cleaned.replace(" ", "")

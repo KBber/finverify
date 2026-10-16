@@ -177,13 +177,19 @@ def _measure(text: str, size: float) -> float:
 def _render_table(page: pymupdf.Page, y: float, tbl: _Table) -> float:
     """把一张表画到 page 上，返回下一个可用 y 坐标。
 
-    数值列右对齐到 ``right_x``，保证列边界稳定，便于后续 ``find_tables()`` 切分。
+    数值列右对齐到 ``right_x``，并**画出竖直分隔线**。
+    竖线是必要的：只靠横线时，find_tables 只能靠空白间距猜测列边界，
+    而中文字宽随字体而变（雅黑 / Noto / 文泉驿各不相同），
+    一旦中文科目名贴近数值列，列就会被切错。
+    显式竖线让列边界成为确定性的几何事实，与字体无关。
     """
     col_x = [MARGIN_X, MARGIN_X + 300]
     right_x = PAGE_W - MARGIN_X
 
     fontfile, _ = _pick_fontfile()
     page.insert_font(fontname=_FONT_ALIAS, fontfile=fontfile)
+
+    top = y - FONT_SIZE
 
     page.insert_text((MARGIN_X, y), tbl.title,
                      fontname=_FONT_ALIAS, fontsize=11.5)
@@ -210,9 +216,17 @@ def _render_table(page: pymupdf.Page, y: float, tbl: _Table) -> float:
                              fontname=_FONT_ALIAS, fontsize=FONT_SIZE)
         y += LINE_H
 
+    bottom = y - 4
     page.draw_line(
-        pymupdf.Point(MARGIN_X, y - 4), pymupdf.Point(right_x, y - 4), width=0.6
+        pymupdf.Point(MARGIN_X, bottom), pymupdf.Point(right_x, bottom), width=0.6
     )
+
+    # 竖直分隔线：科目列与数值列之间，以及表格右边界
+    for vx in (col_x[1] - 12, right_x):
+        page.draw_line(
+            pymupdf.Point(vx, top), pymupdf.Point(vx, bottom), width=0.6
+        )
+
     return y + LINE_H * 1.3
 
 

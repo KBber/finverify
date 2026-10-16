@@ -20,7 +20,7 @@ from finverify.extraction import (  # noqa: E402
     extract_metrics,
     parse_number,
 )
-from finverify.ingestion import load_document  # noqa: E402
+from finverify.ingestion import load_document, normalize_text  # noqa: E402
 from finverify.pipeline import audit  # noqa: E402
 from finverify.samples import AnnualReportData, build_sample_pdf  # noqa: E402
 
@@ -201,6 +201,67 @@ def test_report_serialises_without_breaking():
     assert payload["extraction_trace"]["rows_matched"] > 0
     md = report.to_markdown()
     assert "勾稽校验" in md and "BS_BALANCE" in md
+
+
+# ======================================================================
+# 6. 文本规范化回归
+#    这些用例对应两个真实事故：换一台机器跑，指标静默消失；
+#    负数被读成正数。对财务工具都属于不可接受的错误。
+# ======================================================================
+
+_MINUS_VARIANTS = [
+    ("ASCII 连字符", "-"),
+    ("非断行连字符", "\u2011"),
+    ("减号", "\u2212"),
+    ("全角连字符", "\uff0d"),
+    ("en dash", "\u2013"),
+    ("em dash", "\u2014"),
+]
+
+
+def test_every_minus_variant_parses_as_negative():
+    """任何一种连字符都必须解析为负数。
+
+    回归背景：Noto 字体抽出的负号是 U+2011，
+    旧实现只认 ASCII '-'，于是 -8.8 亿被读成 +8.8 亿 ——
+    现金流量表恒等式会"通过"，错误反而被掩盖。
+    """
+    for name, dash in _MINUS_VARIANTS:
+        parsed = parse_number(f"{dash}880,000,000.00")
+        assert parsed is not None, f"{name} 未解析出数值"
+        value, _unit = parsed
+        assert value == -880_000_000.0, f"{name} {dash!r} 符号丢失: {value}"
+
+
+def test_fullwidth_parenthesised_negative():
+    """全角括号负数 —— 中文财报的常见写法。"""
+    for text in ("(880,000,000.00)", "（880,000,000.00）", "（1,234.00）"):
+        parsed = parse_number(text)
+        assert parsed is not None, f"{text!r} 未解析出数值"
+        assert parsed[0] < 0, f"{text!r} 括号负数失效: {parsed[0]}"
+
+
+def test_cjk_compatibility_ideograph_is_normalised():
+    """兼容码位必须折叠成规范码位，否则科目名正则会静默失配。
+
+    回归背景：Noto Sans CJK 把"利"字的字形反向映射到 U+F9DD
+    （显示完全相同，码位却不同），于是 `三、利润总额` 实际是
+    `三、\\uF9DD润总额`，正则 `利润总额` 匹配不上 ——
+    整行指标连同勾稽校验一起消失，
+    而系统报告的是 REVIEW_REQUIRED，看起来"很合理"。
+    """
+    compat = "\u4e09\u3001\uf9dd\u6da6\u603b\u989d"  # 三、[利]润总额
+    canonical = "三、利润总额"
+
+    assert compat != canonical, "本用例的前提是两者码位不同"
+    assert normalize_text(compat) == canonical
+    assert classify_label(compat) == classify_label(canonical)
+    assert classify_label(compat) is not None, "兼容码位未折叠，科目名匹配失败"
+
+
+def test_fullwidth_digits_are_normalised():
+    """全角数字 —— 部分 PDF 与旧系统导出常见。"""
+    assert parse_number("９４５，０００，０００．００") == (945_000_000.0, "元")
 
 
 if __name__ == "__main__":
