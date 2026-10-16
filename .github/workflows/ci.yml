@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check src tests
+
+      - name: Test
+        run: pytest tests -q
+
+      # 退出码即结论：这里直接断言 CLI 契约，
+      # 避免以后有人改坏退出码而测试仍然全绿。
+      # 注意必须先 set +e —— audit 对 FAIL 样本返回 1 是预期行为，
+      # 不能让 -e 在断言之前就把 step 打断。
+      - name: CLI contract
+        run: |
+          set +e
+          python -m finverify audit samples/demo_annual_report.pdf > /dev/null; ok=$?
+          python -m finverify audit samples/demo_injected_error.pdf   > /dev/null; fail=$?
+          python -m finverify audit samples/does_not_exist.pdf       > /dev/null; miss=$?
+          set -e
+          echo "exit codes -> PASS=$ok FAIL=$fail MISSING=$miss"
+          test "$ok" -eq 0 -a "$fail" -eq 1 -a "$miss" -eq 2
