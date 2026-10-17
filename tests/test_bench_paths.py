@@ -90,19 +90,40 @@ def test_data_dir_rejects_nonexistent_env(monkeypatch):
     assert "FINVERIFY_DATA_DIR" in str(e.value)
 
 
-def test_data_dir_reports_candidates_when_nothing_found(monkeypatch):
-    """候选位全落空时要说清「怎么配」，而不是留一句 not found。"""
+def test_data_dir_reports_candidates_when_nothing_found(monkeypatch, tmp_path):
+    """候选位全落空时要说清「怎么配」，而不是留一句 not found。
+
+    直接测 ``_from_env``，不碰 ``data_dir()``：后者会走真实候选链，
+    在已经放好数据的机器上（比如 F 盘）根本不会走到报错分支；
+    而把 ``_from_env`` 换成桩再断言桩的输出，等于什么都没验证。
+    """
     monkeypatch.delenv("FINVERIFY_DATA_DIR", raising=False)
-    monkeypatch.setattr(_paths, "_from_env", _raise_on_missing)
+    missing = [tmp_path / "absent" / "one", tmp_path / "absent" / "two"]
     with pytest.raises(SystemExit) as e:
-        _paths.data_dir.cache_clear()
-        _paths.data_dir()
+        _paths._from_env(
+            "FINVERIFY_DATA_DIR", missing, "评测集目录", hint="评测集可重新下载。"
+        )
     msg = str(e.value)
-    assert "FINVERIFY_DATA_DIR" in msg and "候选" in msg
+    assert "评测集目录" in msg
+    assert "设环境变量 FINVERIFY_DATA_DIR" in msg
+    assert "评测集可重新下载。" in msg
+    # 两个候选位都要列出来，否则报错等于没给方向
+    assert str(missing[0]) in msg and str(missing[1]) in msg
 
 
-def _raise_on_missing(env, candidates, what, hint=""):
-    raise SystemExit(f"找不到{what}。候选：{candidates}\n{hint}")
+def test_from_env_picks_first_existing_candidate(monkeypatch, tmp_path):
+    monkeypatch.delenv("SOME_DIR_ENV", raising=False)
+    missing, real = tmp_path / "absent", tmp_path
+    (real / "marker.txt").write_text("x", encoding="utf-8")
+    assert _paths._from_env("SOME_DIR_ENV", [missing, real], "东西") == real
+
+
+def test_from_env_prefers_env_over_candidates(monkeypatch, tmp_path):
+    """环境变量必须压过候选位，否则「显式指定」就名不副实。"""
+    other = tmp_path / "other"
+    other.mkdir()
+    monkeypatch.setenv("SOME_DIR_ENV", str(tmp_path))
+    assert _paths._from_env("SOME_DIR_ENV", [other], "东西") == tmp_path
 
 
 # --------------------------------------------------------------------------

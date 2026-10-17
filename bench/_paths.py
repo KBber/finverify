@@ -50,7 +50,13 @@ def _from_env(env: str, candidates: list[pathlib.Path], what: str, hint: str = "
             return c
 
     tried = "".join(f"\n  {c}" for c in candidates)
-    raise SystemExit(f"找不到{what}。已尝试：{tried or '（无候选位）'}\n{hint}")
+    # 报错必须点名环境变量：否则用户看到「找不到评测集目录」时
+    # 不知道该去设哪个变量，只能去翻代码。踩过（写测试时才发现）。
+    raise SystemExit(
+        f"找不到{what}。已尝试：{tried or '（无候选位）'}\n"
+        f"解决办法二选一：设环境变量 {env}=<你的路径>，"
+        f"或把{what}放到上面任一候选位。\n{hint}"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -66,10 +72,7 @@ def data_dir() -> pathlib.Path:
             ROOT / "data" / "real",  # 次选：项目内（需自己加进 .gitignore）
         ],
         "评测集目录（19 份真实年报）",
-        hint=(
-            "二选一：设环境变量 FINVERIFY_DATA_DIR=<你的路径>，"
-            "或把 real/ 放到上面某个候选位。"
-        ),
+        hint="评测集可从巨潮资讯网按 manifest.json 重新下载。",
     )
 
 
