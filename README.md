@@ -7,7 +7,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-66%2F66%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-68%2F68%20passing-brightgreen)]()
 
 ---
 
@@ -257,7 +257,7 @@ finverify/
 │   ├── test_validation.py   # 8 项：校验层行为
 │   ├── test_pipeline.py     # 23 项：端到端 + 回归 + 文本规范化
 │   ├── test_scope.py        # 21 项：口径识别
-│   └── test_merge_rows.py   # 14 项：无框线表行重建
+│   └── test_merge_rows.py   # 16 项：无框线表行重建
 └── docs/
     └── EVALUATION.md        # benchmark 设计
 ```
@@ -323,6 +323,7 @@ finverify/
 | **附注编号列**被当成金额 | `七、61`（附注七第 61 项）里的 `61` 被读成营业收入，真正的本期数 235,575,368.09 被忽略 |
 | 破折号 `-` 表示「零/无」 | `四、净利润  -  -` 被当成「只有标签没有数值」，去吞掉下一行，净利润读成 0.00 |
 | **一页两个口径被并成一张表** | 实测 603117 p88 的表格 bbox 横跨整页（74→759），上半是合并利润表尾部、下半是母公司报表。表格级判定只能二选一地错，母公司所得税 -2,878,668.74 被当成合并口径，恒等式报出差 10,002,568.40 的假 FAIL |
+| 行重建时**全空行不切断分组** | 表头被吸进第一行数据。Windows 字体下碰巧还能匹配，**Linux / Noto CJK 上直接抽不到现金流量三个净额**——本地全绿、只有 CI 红 |
 
 第三类最隐蔽，因为它**产生的是一个看起来合理的错值**：
 
