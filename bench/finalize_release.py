@@ -15,6 +15,9 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from incremental_push import gh  # noqa: E402
 
+# 控制台是 GBK，中文可能编不出去；统一改成 UTF-8 且不抛异常
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 REPO = "KBber/finverify"
 VER = "v0.5.0"
 
