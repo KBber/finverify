@@ -257,9 +257,11 @@ finverify/
 │   ├── test_validation.py   # 8 项：校验层行为
 │   ├── test_pipeline.py     # 23 项：端到端 + 回归 + 文本规范化
 │   ├── test_scope.py        # 21 项：口径识别
-│   └── test_merge_rows.py   # 16 项：无框线表行重建
+│   ├── test_merge_rows.py   # 16 项：无框线表行重建
+│   └── test_bench_paths.py  # 15 项：bench 路径解析（无写死盘符）
 └── docs/
-    └── EVALUATION.md        # benchmark 设计
+    ├── EVALUATION.md        # benchmark 设计
+    └── REPORT.md            # HTML 报告的交互契约与自查方法
 ```
 
 ---
