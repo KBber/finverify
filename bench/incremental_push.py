@@ -16,6 +16,7 @@ PowerShell 5.1 的 Invoke-RestMethod 不做重试，一次断连整个推送就�
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import http.client
 import json
@@ -82,16 +83,16 @@ def gh(method: str, path: str, body: dict | None = None, tries: int = 10):
             body_txt = exc.read()[:300].decode("utf-8", "replace")
             # 4xx 是请求本身的问题（限流/权限/不存在），重试没有意义
             if exc.code not in (403, 429):
-                raise SystemExit(f"API 拒绝 {method} {path}: {exc.code} {body_txt}")
+                raise SystemExit(
+                    f"API 拒绝 {method} {path}: {exc.code} {body_txt}"
+                ) from exc
             last = exc
         except Exception as exc:  # noqa: BLE001
             last = exc
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:  # noqa: BLE001,S110
-                    pass
         if i < tries - 1:
             wait = min(1.5 ** i, 8) + (i * 0.3)
             print(
