@@ -20,15 +20,14 @@ import contextlib
 import hashlib
 import http.client
 import json
-import pathlib
 import sys
 import time
 import urllib.error
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+import _paths
+
+ROOT = _paths.ROOT
 REPO = "KBber/finverify"
-MSG_FILE = pathlib.Path(r"G:\minimax_workspace\github-kit\_commit_msg.txt")
-KEYS = pathlib.Path(r"C:\Users\Admin\Desktop\PHD\key.txt")
 API = "https://api.github.com"
 
 SKIP_DIRS = {"__pycache__", ".pytest_cache", ".ruff_cache"}
@@ -37,7 +36,7 @@ SKIP_DIRS = {"__pycache__", ".pytest_cache", ".ruff_cache"}
 def token() -> str:
     import re
 
-    raw = KEYS.read_text(encoding="utf-8")
+    raw = _paths.secrets().read_text(encoding="utf-8")
     m = re.search(r"ghp_[A-Za-z0-9]{30,}", raw)
     if not m:
         raise SystemExit("GitHub PAT 提取失败")
@@ -182,7 +181,7 @@ def main() -> int:
         "POST",
         f"/repos/{REPO}/git/commits",
         {
-            "message": MSG_FILE.read_text(encoding="utf-8"),
+            "message": _paths.commit_msg().read_text(encoding="utf-8"),
             "tree": tree["sha"],
             "parents": [parent],
             "author": {"name": "Xue Dingtian", "email": email, "date": now},

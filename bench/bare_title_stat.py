@@ -22,12 +22,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import _paths  # noqa: E402
+
 from finverify.ingestion import all_text_lines  # noqa: E402
 from finverify.scope import _clean, match_title  # noqa: E402
 
-DATA = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(
-    r"G:\minimax_workspace\github-kit\data\real"
-)
+DATA = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else _paths.data_dir()
 
 BARE = ("资产负债表", "利润表", "现金流量表", "所有者权益变动表", "股东权益变动表")
 

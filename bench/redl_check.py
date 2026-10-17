@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import pathlib
 
+import _paths
 import pymupdf
 
-new_dir = pathlib.Path(r"C:\Users\Admin\AppData\Local\Temp\fv-redl")
-old = pathlib.Path(r"G:\minimax_workspace\github-kit\data\real\873576_天力复合.pdf")
+new_dir = _paths.scratch_dir("fv-redl")
+old = _paths.pdf_for("873576")
 
 new_pdf = next(new_dir.glob("*.pdf"))
 out: list[str] = []
@@ -37,7 +38,5 @@ if man.exists():
         out.append(f"    标题: {m['title']}")
         out.append(f"    URL:  {m['url']}")
 
-pathlib.Path(r"G:\minimax_workspace\github-kit\finverify\bench\redl_check.txt").write_text(
-    "\n".join(out), encoding="utf-8"
-)
+_paths.note("redl_check.txt").write_text("\n".join(out), encoding="utf-8")
 print("ok")

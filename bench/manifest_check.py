@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-import pathlib
 
-p = pathlib.Path(r"G:\minimax_workspace\github-kit\data\real\manifest.json")
+import _paths
+
+p = _paths.manifest()
 d = json.loads(p.read_text(encoding="utf-8"))
 
 out = [
@@ -26,7 +27,5 @@ for m in d:
         f"{flag} {m['title'][:40]}"
     )
 
-pathlib.Path(__file__).with_name("manifest_check.txt").write_text(
-    "\n".join(out), encoding="utf-8"
-)
+_paths.note("manifest_check.txt").write_text("\n".join(out), encoding="utf-8")
 print(f"ok {len(d)}")

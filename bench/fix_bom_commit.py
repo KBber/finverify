@@ -14,10 +14,10 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import _paths  # noqa: E402
 from incremental_push import gh  # noqa: E402
 
 REPO = "KBber/finverify"
-MSG_FILE = pathlib.Path(r"G:\minimax_workspace\github-kit\_commit_msg.txt")
 
 # 控制台是 GBK，中文可能编不出去；统一改成 UTF-8 且不抛异常
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -30,10 +30,11 @@ def clean(path: pathlib.Path) -> str:
 
 
 def main() -> int:
-    msg = clean(MSG_FILE)
+    msg_file = _paths.commit_msg()
+    msg = clean(msg_file)
     assert not msg.startswith("\ufeff"), "BOM 仍在"
     # 把干净版本写回去，避免下次再踩
-    MSG_FILE.write_bytes(msg.encode("utf-8"))
+    msg_file.write_bytes(msg.encode("utf-8"))
     print(f"提交信息首行: {msg.splitlines()[0]}")
 
     me = gh("GET", "/user")

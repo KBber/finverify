@@ -1,0 +1,13 @@
+打包 89 个文件 -> C:\Users\Admin\Desktop\finverify-v0.5.zip
+体积 895.4 KB
+
+=== 解压后独立验证 ===
+pytest: 68 passed in 5.01s
+CLI 退出码契约:
+  samples/demo_annual_report.pdf               期望0 实际0  OK
+  samples/demo_injected_error.pdf              期望1 实际1  OK
+  samples/demo_injected_error_tax.pdf          期望1 实际1  OK
+  samples/does_not_exist.pdf                   期望2 实际2  OK
+
+打包文件清单（顶层）:
+  .github, .gitignore, LICENSE, README.md, bench, docs, pyproject.toml, samples, src, tests

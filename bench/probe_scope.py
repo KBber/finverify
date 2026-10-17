@@ -14,13 +14,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import _paths  # noqa: E402
+
 from finverify.ingestion import all_text_lines  # noqa: E402
 from finverify.scope import _clean, match_title  # noqa: E402
 
-PDF = pathlib.Path(
-    sys.argv[1] if len(sys.argv) > 1
-    else r"G:\minimax_workspace\github-kit\data\real\688610_埃科光电.pdf"
-)
+PDF = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else _paths.pdf_for("688610")
 
 out: list[str] = []
 lines = all_text_lines(PDF)

@@ -1,0 +1,39 @@
+桌面上的 finverify 压缩包
+============================================================================
+
+finverify-v0.1.zip      18.3 KB   10 个文件
+  顶层: .gitignore, LICENSE, README.md, docs, pyproject.toml, src, tests
+  内含 pyproject: version = "0.1.0"
+
+finverify-v0.2.zip     304.2 KB   20 个文件
+  顶层: .gitignore, LICENSE, README.md, docs, pyproject.toml, samples, src, tests
+  内含 pyproject: version = "0.1.0"
+
+finverify-v0.3.zip     837.7 KB   41 个文件
+  顶层: .gitignore, .pytest_cache, LICENSE, README.md, docs, pyproject.toml, samples, src, tests
+  内含 pyproject: version = "0.3.0"
+
+finverify-v0.4.zip    1155.5 KB   58 个文件
+  顶层: .github, .gitignore, .pytest_cache, .ruff_cache, LICENSE, README.md, __pycache__, bench, docs, pyproject.toml, samples, src, tests
+  内含 pyproject: version = "0.4.0"
+
+finverify-v0.5.zip     895.4 KB   89 个文件
+  顶层: .github, .gitignore, LICENSE, README.md, bench, docs, pyproject.toml, samples, src, tests
+  内含 pyproject: version = "0.5.0"
+
+============================================================================
+这些包是什么
+
+它们是 finverify 项目在每个版本节点上的**只读快照**，
+用途是「拿到没有开发环境的机器上双击就能看」：
+  - 直接双击 samples/*.html 就能看可交互报告，不需要装 Python；
+  - 解压后 `pip install -e .` 就是一个可运行的完整项目。
+
+真正的项目源码在项目目录里，不在桌面：
+  F:\AI-lea\AI-Workplace\finverify
+
+体积差异也说明它们是历史快照 —— v0.1 只有 18 KB（刚有骨架），
+v0.4 涨到 1.1 MB（加入了多模型评测），v0.5 反而回到 895 KB
+（把 11 个误入库的缓存文件和生成物清掉了）。
+
+需要保留的只有最新的 v0.5.zip，前四个是历史里程碑。

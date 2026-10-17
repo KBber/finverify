@@ -21,14 +21,11 @@ finverify 的抽取层是**规则驱动、确定性**的。本模块把同一份
 from __future__ import annotations
 
 import json
-import pathlib
 import re
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-
-SECRETS_PATH = pathlib.Path(r"C:\Users\Admin\Desktop\PHD\key.txt")
 
 
 # --------------------------------------------------------------------------
@@ -74,8 +71,10 @@ class ModelSpec:
 
 
 def load_keys() -> dict[str, str]:
-    """从 key.txt 就地读取密钥，不写盘、不打印、不进日志。"""
-    raw = SECRETS_PATH.read_text(encoding="utf-8")
+    """从密钥文件就地读取，不写盘、不打印、不进日志。"""
+    import _paths
+
+    raw = _paths.secrets().read_text(encoding="utf-8")
     keys = re.findall(r"sk-[A-Za-z0-9]{20,}", raw)
     out: dict[str, str] = {}
     if keys:

@@ -10,12 +10,14 @@ import json
 import pathlib
 import shutil
 
-new_dir = pathlib.Path(r"C:\Users\Admin\AppData\Local\Temp\fv-redl")
-data_dir = pathlib.Path(r"G:\minimax_workspace\github-kit\data\real")
+import _paths
+
+new_dir = _paths.scratch_dir("fv-redl")
+data_dir = _paths.data_dir()
 CODE = "873576"
 
 new_pdf = next(new_dir.glob(f"{CODE}_*.pdf"))
-dest = next(data_dir.glob(f"{CODE}_*.pdf"))
+dest = _paths.pdf_for(CODE)
 new_man = json.loads((new_dir / "manifest.json").read_text(encoding="utf-8"))[0]
 
 out: list[str] = []

@@ -12,16 +12,17 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import _paths  # noqa: E402
+
 from finverify.ingestion import all_text_lines  # noqa: E402
 from finverify.scope import _clean, match_title  # noqa: E402
 
-DATA = pathlib.Path(r"G:\minimax_workspace\github-kit\data\real")
 TARGETS = ["836263", "873576"]
 KEY = re.compile(r"资产负债表|利润表|现金流量表|所有者权益变动表|股东权益变动表")
 
 L: list[str] = []
 for code in TARGETS:
-    pdf = next(DATA.glob(f"{code}_*.pdf"))
+    pdf = _paths.pdf_for(code)
     L.append("=" * 90)
     L.append(f"{pdf.name}")
     L.append("=" * 90)
